@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~/startpage</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:        #16131B;
+    --surface:   rgba(22, 19, 27, 0.82);
+    --surface2:  rgba(45, 52, 77, 0.55);
+    --border:    rgba(177, 101, 179, 0.22);
+    --border-hi: rgba(177, 101, 179, 0.55);
+    --purple:    #B165B3;
+    --blue:      #718BB4;
+    --text:      #ccc0de;
+    --muted:     rgba(177, 101, 179, 0.5);
+    --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Hero ── */
+  .hero {
+    position: relative;
+    height: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background: url('./assets/wallpaper.png') center/cover no-repeat;
+    filter: brightness(0.38) saturate(0.85);
+    z-index: 0;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+      rgba(22,19,27,0.25) 0%,
+      rgba(22,19,27,0.92) 100%);
+    z-index: 1;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+  }
+
+  .clock {
+    font-size: 3.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 18px rgba(177,101,179,0.45));
+  }
+
+  .date {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: -14px;
+  }
+
+  /* ── Search ── */
+  .search-wrap {
+    position: relative;
+    width: min(580px, 90vw);
+  }
+
+  .search-wrap::before {
+    content: '›';
+    position: absolute;
+    left: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--purple);
+    font-size: 1.1rem;
+    pointer-events: none;
+  }
+
+  .search {
+    width: 100%;
+    background: rgba(22, 19, 27, 0.75);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 10px 14px 10px 30px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search::placeholder { color: rgba(177,101,179,0.4); }
+
+  .search:focus {
+    border-color: var(--purple);
+    box-shadow: 0 0 14px rgba(177,101,179,0.2);
+  }
+
+  /* ── Grid ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(255px, 1fr));
+    gap: 13px;
+    padding: 26px 30px 52px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 13px 15px;
+    backdrop-filter: blur(8px);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--border-hi);
+    box-shadow: 0 0 18px rgba(177,101,179,0.08);
+  }
+
+  .card-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-title::before { content: '# '; }
+
+  .link-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+
+  .link-list a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 0.79rem;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 2px 4px;
+    border-radius: 2px;
+    transition: color 0.15s, background 0.15s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .link-list a::before {
+    content: '›';
+    color: var(--blue);
+    flex-shrink: 0;
+  }
+
+  .link-list a:hover {
+    color: var(--purple);
+    background: rgba(177,101,179,0.07);
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: rgba(177,101,179,0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div>
+      <div class="clock" id="clock">00:00:00</div>
+      <div class="date" id="date"></div>
+    </div>
+    <form class="search-wrap" action="https://duckduckgo.com/" target="_self">
+      <input class="search" name="q" type="text" placeholder="search the web..." autofocus autocomplete="off" spellcheck="false">
+    </form>
+  </div>
+</div>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="card-title">Hacking Platforms</div>
+    <ul class="link-list">
+      <li><a href="https://www.hackthebox.eu/" target="_blank">Hack The Box</a></li>
+      <li><a href="https://tryhackme.com/" target="_blank">TryHackMe</a></li>
+      <li><a href="https://portswigger.net/web-security/all-labs" target="_blank">PortSwigger Web Security</a></li>
+      <li><a href="https://pentesterlab.com/" target="_blank">PentesterLab</a></li>
+      <li><a href="https://www.root-me.org/?lang=en" target="_blank">Root Me</a></li>
+      <li><a href="https://overthewire.org/wargames/" target="_blank">OverTheWire</a></li>
+      <li><a href="https://pwnx.io/" target="_blank">PWNX</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Bug Bounty</div>
+    <ul class="link-list">
+      <li><a href="https://www.hackerone.com/" target="_blank">HackerOne</a></li>
+      <li><a href="https://www.bugcrowd.com/" target="_blank">Bugcrowd</a></li>
+      <li><a href="https://www.intigriti.com/" target="_blank">Intigriti</a></li>
+      <li><a href="https://www.yeswehack.com/" target="_blank">YesWeHack</a></li>
+      <li><a href="https://www.openbugbounty.org/" target="_blank">Open Bug Bounty</a></li>
+      <li><a href="https://hackenproof.com/" target="_blank">HackenProof</a></li>
+      <li><a href="https://firebounty.com/" target="_blank">FireBounty</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">OSINT</div>
+    <ul class="link-list">
+      <li><a href="https://osintframework.com/" target="_blank">OSINT Framework</a></li>
+      <li><a href="https://shodan.io/" target="_blank">Shodan</a></li>
+      <li><a href="https://www.virustotal.com/gui/" target="_blank">VirusTotal</a></li>
+      <li><a href="https://haveibeenpwned.com/" target="_blank">Have I Been Pwned</a></li>
+      <li><a href="https://crt.sh/" target="_blank">crt.sh — Cert Search</a></li>
+      <li><a href="https://intelx.io/" target="_blank">Intelligence X</a></li>
+      <li><a href="https://talosintelligence.com/" target="_blank">Cisco Talos</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Exploit Databases</div>
+    <ul class="link-list">
+      <li><a href="https://www.exploit-db.com/" target="_blank">Exploit-DB</a></li>
+      <li><a href="https://www.rapid7.com/db/" target="_blank">Rapid7 Vulndb</a></li>
+      <li><a href="https://vuldb.com/" target="_blank">VulDB</a></li>
+      <li><a href="https://attackerkb.com/" target="_blank">AttackerKB</a></li>
+      <li><a href="https://www.cve.org/" target="_blank">CVE.org</a></li>
+      <li><a href="https://cwe.mitre.org/" target="_blank">CWE — MITRE</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Crypto &amp; Hashes</div>
+    <ul class="link-list">
+      <li><a href="https://gchq.github.io/CyberChef/" target="_blank">CyberChef</a></li>
+      <li><a href="https://crackstation.net/" target="_blank">CrackStation</a></li>
+      <li><a href="https://jwt.io/" target="_blank">jwt.io</a></li>
+      <li><a href="https://hashes.com/en/decrypt/hash" target="_blank">Hashes.com</a></li>
+      <li><a href="https://hashkiller.io/" target="_blank">HashKiller</a></li>
+      <li><a href="https://rot13.com/" target="_blank">rot13</a></li>
+      <li><a href="https://www.boxentriq.com/code-breaking/cipher-identifier" target="_blank">Cipher Identifier</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Resources &amp; Cheatsheets</div>
+    <ul class="link-list">
+      <li><a href="https://book.hacktricks.xyz/" target="_blank">HackTricks</a></li>
+      <li><a href="https://gtfobins.github.io/" target="_blank">GTFOBins</a></li>
+      <li><a href="https://lolbas-project.github.io/" target="_blank">LOLBAS</a></li>
+      <li><a href="https://github.com/swisskyrepo/PayloadsAllTheThings" target="_blank">PayloadsAllTheThings</a></li>
+      <li><a href="https://www.revshells.com/" target="_blank">RevShells Generator</a></li>
+      <li><a href="https://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet" target="_blank">Reverse Shell Cheatsheet</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sandbox &amp; Analysis</div>
+    <ul class="link-list">
+      <li><a href="https://app.any.run/" target="_blank">Any.Run</a></li>
+      <li><a href="https://hybrid-analysis.com/" target="_blank">Hybrid Analysis</a></li>
+      <li><a href="https://abuse.ch/" target="_blank">abuse.ch</a></li>
+      <li><a href="https://pulsedive.com/" target="_blank">Pulsedive</a></li>
+      <li><a href="https://app.interactsh.com/" target="_blank">Interactsh</a></li>
+      <li><a href="https://webhook.site/" target="_blank">Webhook.site</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Privilege Escalation</div>
+    <ul class="link-list">
+      <li><a href="https://book.hacktricks.xyz/linux-unix/linux-privilege-escalation-checklist" target="_blank">Linux PrivEsc — HackTricks</a></li>
+      <li><a href="https://book.hacktricks.xyz/windows/checklist-windows-privilege-escalation" target="_blank">Windows PrivEsc — HackTricks</a></li>
+      <li><a href="https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite" target="_blank">PEASS-ng</a></li>
+      <li><a href="https://github.com/rebootuser/LinEnum" target="_blank">LinEnum</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Network Tools</div>
+    <ul class="link-list">
+      <li><a href="https://mxtoolbox.com/" target="_blank">MXToolbox</a></li>
+      <li><a href="https://viewdns.info/" target="_blank">ViewDNS</a></li>
+      <li><a href="https://centralops.net/co/" target="_blank">CentralOps</a></li>
+      <li><a href="https://networkcalc.com/subnet-calculator" target="_blank">Subnet Calculator</a></li>
+      <li><a href="https://ns.tools/" target="_blank">NS.tools</a></li>
+      <li><a href="https://lookup.icann.org/en" target="_blank">ICANN Lookup</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Web Dev &amp; JavaScript</div>
+    <ul class="link-list">
+      <li><a href="https://regex101.com/" target="_blank">regex101</a></li>
+      <li><a href="https://beautifier.io/" target="_blank">JS Beautifier</a></li>
+      <li><a href="https://obfuscator.io/" target="_blank">JS Obfuscator</a></li>
+      <li><a href="https://jsfiddle.net/" target="_blank">JSFiddle</a></li>
+      <li><a href="https://prettier.io/playground/" target="_blank">Prettier Playground</a></li>
+      <li><a href="https://meyerweb.com/eric/tools/dencoder/" target="_blank">URL Decoder/Encoder</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">AI Tools</div>
+    <ul class="link-list">
+      <li><a href="https://chat.openai.com/" target="_blank">ChatGPT</a></li>
+      <li><a href="https://claude.ai/" target="_blank">Claude</a></li>
+      <li><a href="https://colab.research.google.com" target="_blank">Google Colab</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Learning</div>
+    <ul class="link-list">
+      <li><a href="https://0xdf.gitlab.io/" target="_blank">0xdf hacks stuff</a></li>
+      <li><a href="https://www.youtube.com/channel/UCa6eh7gCkpPo5XXUDfygQQA" target="_blank">IppSec — YouTube</a></li>
+      <li><a href="https://www.youtube.com/channel/UClcE-kVhqyiHCcjYwcpfj9w" target="_blank">LiveOverflow — YouTube</a></li>
+      <li><a href="https://infosec-conferences.com/" target="_blank">Infosec Conferences</a></li>
+      <li><a href="https://underthewire.tech/" target="_blank">UnderTheWire</a></li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    const now = new Date();
+    document.getElementById('clock').textContent =
+      `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    document.getElementById('date').textContent =
+      now.toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  }
+
+  tick();
+  setInterval(tick, 1000);
+
+  document.querySelector('.search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const q = e.target.value.trim();
+      if (q) window.location.href = `https://duckduckgo.com/?q=${encodeURIComponent(q)}`;
+    }
+  });
+</script>
+
+</body>
+</html>
