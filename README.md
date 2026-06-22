@@ -1,5 +1,7 @@
 # firefox-startpage
 
+![screenshot](assets/screenshot.png)
+
 A cyberpunk-themed Firefox new tab page. No extensions required — uses Firefox AutoConfig to load a local HTML file.
 
 **Features:**
