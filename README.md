@@ -67,6 +67,10 @@ Add this line to `~/.mozilla/firefox/YOUR_PROFILE/user.js`:
 user_pref("browser.startup.homepage", "file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html");
 ```
 
+## Wallpaper
+
+The wallpaper (`assets/wallpaper.png`) is **not my creation**. I do not know the original artist. If you are the creator and would like it removed or credited properly, please open an issue or contact me and I will make the change immediately.
+
 ## Notes
 
 - **Package updates**: `mozilla.cfg` lives in the Firefox install dir and may be overwritten by major upgrades. Re-copy it after updates.
