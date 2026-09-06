@@ -52,20 +52,25 @@ file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html
 
 ### 4. Restart Firefox
 
-New tabs should now open the startpage.
+Fully quit Firefox (all windows/processes, not just close-window) and relaunch. New tabs should now open the startpage.
 
 **Troubleshooting:**
 - Verify the path in `mozilla.cfg` matches where you placed `index.html`
 - Make sure both AutoConfig files are in the right Firefox directory
 - Firefox ESR and standard Firefox have separate install dirs — edit the right one
+- **Standard release Firefox sandboxes AutoConfig by default**, which silently no-ops the `ChromeUtils.importESModule(...)` line in `mozilla.cfg` (no error shown). `autoconfig.js` already sets `pref("general.config.sandbox_enabled", false);` to disable that — if new tabs still show the default page, confirm this pref actually landed in the installed `autoconfig.js`.
+- **Check for a conflicting extension.** Any extension with `chrome_url_overrides.newtab` in its manifest (e.g. another new-tab-replacement addon) silently overrides AutoConfig. Check `about:addons` → Extensions and disable/remove anything else controlling the new tab page.
 
 ### Optional: Set as homepage too
 
-Add this line to `~/.mozilla/firefox/YOUR_PROFILE/user.js`:
+`browser.startup.homepage` only affects the Home button and new windows — it does **not** control what loads when Firefox first launches (that's `browser.startup.page`, usually defaulting to "resume previous session"). To also show the startpage on launch, add both lines to `~/.mozilla/firefox/YOUR_PROFILE/user.js`:
 
 ```js
 user_pref("browser.startup.homepage", "file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html");
+user_pref("browser.startup.page", 1);
 ```
+
+This replaces session-resume behavior on launch (old tabs are still recoverable via History → Restore Previous Session). Put changes in `user.js`, not `prefs.js` — Firefox overwrites `prefs.js` from memory on exit, so direct edits there get silently reverted.
 
 ## Wallpaper
 
