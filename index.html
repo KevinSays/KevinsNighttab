@@ -7,26 +7,41 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  /* Theme defaults; overridden per background from Background/backgrounds.js */
   :root {
-    --bg:        #16131B;
-    --surface:   rgba(22, 19, 27, 0.82);
-    --surface2:  rgba(45, 52, 77, 0.55);
-    --border:    rgba(177, 101, 179, 0.22);
-    --border-hi: rgba(177, 101, 179, 0.55);
-    --purple:    #B165B3;
-    --blue:      #718BB4;
-    --text:      #ccc0de;
-    --muted:     rgba(177, 101, 179, 0.5);
+    --bg-rgb:      22,19,27;
+    --accent-rgb:  177,101,179;
+    --accent2-rgb: 113,139,180;
+    --text-rgb:    204,192,222;
+    --surface-a:   0.82;
+    --blur:        8px;
+    --hero-bright: 0.38;
+    --bg-pos:      center;
+    --hero-align:  center;
+
+    --bg:        rgb(var(--bg-rgb));
+    --surface:   rgba(var(--bg-rgb), var(--surface-a));
+    --border:    rgba(var(--accent-rgb), 0.22);
+    --border-hi: rgba(var(--accent-rgb), 0.55);
+    --accent:    rgb(var(--accent-rgb));
+    --accent2:   rgb(var(--accent2-rgb));
+    --text:      rgb(var(--text-rgb));
+    --muted:     rgba(var(--accent-rgb), 0.6);
     --mono:      'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
   }
 
   body {
-    background: var(--bg);
+    background:
+      radial-gradient(ellipse at 15% 100%, rgba(var(--accent-rgb), 0.06), transparent 55%),
+      radial-gradient(ellipse at 85% 100%, rgba(var(--accent2-rgb), 0.06), transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
     color: var(--text);
     font-family: var(--mono);
     font-size: 13px;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background-color 0.4s;
   }
 
   /* ── Hero ── */
@@ -35,17 +50,16 @@
     height: 340px;
     display: flex;
     flex-direction: column;
-    align-items: center;
     justify-content: center;
-    gap: 22px;
     overflow: hidden;
   }
 
   .hero-bg {
     position: absolute;
     inset: 0;
-    background: url('./assets/wallpaper.png') center/cover no-repeat;
-    filter: brightness(0.38) saturate(0.85);
+    background-size: cover;
+    background-position: var(--bg-pos);
+    filter: brightness(var(--hero-bright)) saturate(0.85);
     z-index: 0;
   }
 
@@ -53,8 +67,8 @@
     position: absolute;
     inset: 0;
     background: linear-gradient(to bottom,
-      rgba(22,19,27,0.25) 0%,
-      rgba(22,19,27,0.92) 100%);
+      rgba(var(--bg-rgb), 0.25) 0%,
+      rgba(var(--bg-rgb), 0.92) 100%);
     z-index: 1;
   }
 
@@ -63,9 +77,10 @@
     z-index: 2;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: var(--hero-align);
     gap: 22px;
     width: 100%;
+    padding: 0 6vw;
   }
 
   .clock {
@@ -73,11 +88,11 @@
     font-weight: 700;
     letter-spacing: 0.04em;
     line-height: 1;
-    background: linear-gradient(135deg, var(--purple), var(--blue));
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    filter: drop-shadow(0 0 18px rgba(177,101,179,0.45));
+    filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), 0.45));
   }
 
   .date {
@@ -85,13 +100,16 @@
     color: var(--muted);
     letter-spacing: 0.18em;
     text-transform: uppercase;
-    margin-top: -14px;
+    margin-top: 8px;
   }
+
+  .hero-content[data-align="flex-end"] .when { text-align: right; }
+  .hero-content[data-align="center"] .when { text-align: center; }
 
   /* ── Search ── */
   .search-wrap {
     position: relative;
-    width: min(580px, 90vw);
+    width: min(580px, 88vw);
   }
 
   .search-wrap::before {
@@ -100,14 +118,14 @@
     left: 13px;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--purple);
+    color: var(--accent);
     font-size: 1.1rem;
     pointer-events: none;
   }
 
   .search {
     width: 100%;
-    background: rgba(22, 19, 27, 0.75);
+    background: rgba(var(--bg-rgb), 0.75);
     border: 1px solid var(--border);
     border-radius: 3px;
     padding: 10px 14px 10px 30px;
@@ -118,11 +136,11 @@
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
-  .search::placeholder { color: rgba(177,101,179,0.4); }
+  .search::placeholder { color: rgba(var(--accent-rgb), 0.45); }
 
   .search:focus {
-    border-color: var(--purple);
-    box-shadow: 0 0 14px rgba(177,101,179,0.2);
+    border-color: var(--accent);
+    box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.2);
   }
 
   /* ── Grid ── */
@@ -140,21 +158,23 @@
     border: 1px solid var(--border);
     border-radius: 3px;
     padding: 13px 15px;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(var(--blur));
     transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   .card:hover {
     border-color: var(--border-hi);
-    box-shadow: 0 0 18px rgba(177,101,179,0.08);
+    box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.08);
   }
+
+  .card.local { border-color: rgba(var(--accent2-rgb), 0.45); }
 
   .card-title {
     font-size: 0.68rem;
     font-weight: 700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
-    background: linear-gradient(90deg, var(--purple), var(--blue));
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -184,29 +204,105 @@
 
   .link-list a::before {
     content: '›';
-    color: var(--blue);
+    color: var(--accent2);
     flex-shrink: 0;
   }
 
   .link-list a:hover {
-    color: var(--purple);
-    background: rgba(177,101,179,0.07);
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.07);
   }
+
+  /* HackTricks container status dot */
+  .status {
+    width: 6px; height: 6px; border-radius: 50%;
+    margin-left: auto; flex-shrink: 0;
+    background: rgba(var(--text-rgb), 0.25);
+  }
+  .status.up   { background: #5fd38d; box-shadow: 0 0 6px #5fd38d; }
+  .status.down { background: #d35f5f; }
+
+  /* ── Background picker ── */
+  .bg-controls {
+    position: fixed;
+    right: 16px; bottom: 16px;
+    z-index: 10;
+    display: flex;
+    gap: 6px;
+  }
+
+  .bg-toggle {
+    background: rgba(var(--bg-rgb), 0.94);
+    border: 1px solid var(--border-hi);
+    border-radius: 3px;
+    color: var(--text);
+    font: 0.7rem var(--mono);
+    letter-spacing: 0.15em;
+    padding: 6px 10px;
+    cursor: pointer;
+    backdrop-filter: blur(var(--blur));
+  }
+  .bg-toggle:hover { color: var(--accent); border-color: var(--border-hi); }
+
+  .bg-panel {
+    position: fixed;
+    right: 16px; bottom: 52px;
+    z-index: 10;
+    display: none;
+    grid-template-columns: repeat(auto-fill, 120px);
+    gap: 8px;
+    width: min(400px, calc(100vw - 32px));
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 10px;
+    background: rgba(var(--bg-rgb), 0.95);
+    border: 1px solid var(--border-hi);
+    border-radius: 3px;
+  }
+  .bg-panel.open { display: grid; }
+
+  .bg-opt {
+    position: relative;
+    height: 68px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: center / cover no-repeat rgba(var(--accent-rgb), 0.08);
+    color: var(--text);
+    font: 0.62rem var(--mono);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-end;
+    padding: 3px 5px;
+    overflow: hidden;
+  }
+  .bg-opt span {
+    background: rgba(var(--bg-rgb), 0.75);
+    padding: 1px 4px;
+    border-radius: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  .bg-opt:hover { border-color: var(--border-hi); }
+  .bg-opt.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .bg-opt.shuffle { align-items: center; justify-content: center; font-size: 0.75rem; }
 
   /* scrollbar */
   ::-webkit-scrollbar { width: 5px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: rgba(177,101,179,0.3); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb { background: rgba(var(--accent-rgb), 0.3); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--border-hi); }
+  html { scrollbar-color: rgba(var(--accent-rgb), 0.3) var(--bg); }
 </style>
 </head>
 <body>
 
 <div class="hero">
-  <div class="hero-bg"></div>
+  <div class="hero-bg" id="hero-bg"></div>
   <div class="hero-overlay"></div>
-  <div class="hero-content">
-    <div>
+  <div class="hero-content" id="hero-content" data-align="center">
+    <div class="when">
       <div class="clock" id="clock">00:00:00</div>
       <div class="date" id="date"></div>
     </div>
@@ -218,16 +314,27 @@
 
 <div class="grid">
 
+  <div class="card local">
+    <div class="card-title">Local / Offline</div>
+    <ul class="link-list">
+      <li><a href="http://localhost:3337/" target="_blank" title="Docker container: start with `hacktricks` in a shell">HackTricks (container) <span class="status" id="ht-status"></span></a></li>
+      <li><a id="ht-book" href="#" target="_blank" title="~/hacktricks/book, last build on disk; search needs the container">HackTricks (offline book)</a></li>
+      <li><a href="local/CyberChef/index.html" target="_blank">CyberChef</a></li>
+      <li><a href="local/revshells/index.html" target="_blank">RevShells Generator</a></li>
+      <li><a href="local/gtfobins/index.html" target="_blank">GTFOBins</a></li>
+      <li><a href="local/lolbas/index.html" target="_blank">LOLBAS</a></li>
+    </ul>
+  </div>
+
   <div class="card">
     <div class="card-title">Hacking Platforms</div>
     <ul class="link-list">
-      <li><a href="https://www.hackthebox.eu/" target="_blank">Hack The Box</a></li>
+      <li><a href="https://www.hackthebox.com/" target="_blank">Hack The Box</a></li>
       <li><a href="https://tryhackme.com/" target="_blank">TryHackMe</a></li>
       <li><a href="https://portswigger.net/web-security/all-labs" target="_blank">PortSwigger Web Security</a></li>
       <li><a href="https://pentesterlab.com/" target="_blank">PentesterLab</a></li>
       <li><a href="https://www.root-me.org/?lang=en" target="_blank">Root Me</a></li>
       <li><a href="https://overthewire.org/wargames/" target="_blank">OverTheWire</a></li>
-      <li><a href="https://pwnx.io/" target="_blank">PWNX</a></li>
     </ul>
   </div>
 
@@ -248,7 +355,7 @@
     <div class="card-title">OSINT</div>
     <ul class="link-list">
       <li><a href="https://osintframework.com/" target="_blank">OSINT Framework</a></li>
-      <li><a href="https://shodan.io/" target="_blank">Shodan</a></li>
+      <li><a href="https://www.shodan.io/" target="_blank">Shodan</a></li>
       <li><a href="https://www.virustotal.com/gui/" target="_blank">VirusTotal</a></li>
       <li><a href="https://haveibeenpwned.com/" target="_blank">Have I Been Pwned</a></li>
       <li><a href="https://crt.sh/" target="_blank">crt.sh — Cert Search</a></li>
@@ -261,9 +368,8 @@
     <div class="card-title">Exploit Databases</div>
     <ul class="link-list">
       <li><a href="https://www.exploit-db.com/" target="_blank">Exploit-DB</a></li>
-      <li><a href="https://www.rapid7.com/db/" target="_blank">Rapid7 Vulndb</a></li>
+      <li><a href="https://www.rapid7.com/db/" target="_blank">Rapid7 Vulndb / AttackerKB</a></li>
       <li><a href="https://vuldb.com/" target="_blank">VulDB</a></li>
-      <li><a href="https://attackerkb.com/" target="_blank">AttackerKB</a></li>
       <li><a href="https://www.cve.org/" target="_blank">CVE.org</a></li>
       <li><a href="https://cwe.mitre.org/" target="_blank">CWE — MITRE</a></li>
     </ul>
@@ -274,23 +380,20 @@
     <ul class="link-list">
       <li><a href="https://gchq.github.io/CyberChef/" target="_blank">CyberChef</a></li>
       <li><a href="https://crackstation.net/" target="_blank">CrackStation</a></li>
-      <li><a href="https://jwt.io/" target="_blank">jwt.io</a></li>
+      <li><a href="https://www.jwt.io/" target="_blank">jwt.io</a></li>
       <li><a href="https://hashes.com/en/decrypt/hash" target="_blank">Hashes.com</a></li>
-      <li><a href="https://hashkiller.io/" target="_blank">HashKiller</a></li>
-      <li><a href="https://rot13.com/" target="_blank">rot13</a></li>
-      <li><a href="https://www.boxentriq.com/code-breaking/cipher-identifier" target="_blank">Cipher Identifier</a></li>
+      <li><a href="https://www.boxentriq.com/analysis/cipher-identifier" target="_blank">Cipher Identifier</a></li>
     </ul>
   </div>
 
   <div class="card">
     <div class="card-title">Resources &amp; Cheatsheets</div>
     <ul class="link-list">
-      <li><a href="https://book.hacktricks.xyz/" target="_blank">HackTricks</a></li>
-      <li><a href="https://gtfobins.github.io/" target="_blank">GTFOBins</a></li>
+      <li><a href="https://hacktricks.wiki/" target="_blank">HackTricks</a></li>
+      <li><a href="https://gtfobins.org/" target="_blank">GTFOBins</a></li>
       <li><a href="https://lolbas-project.github.io/" target="_blank">LOLBAS</a></li>
       <li><a href="https://github.com/swisskyrepo/PayloadsAllTheThings" target="_blank">PayloadsAllTheThings</a></li>
       <li><a href="https://www.revshells.com/" target="_blank">RevShells Generator</a></li>
-      <li><a href="https://pentestmonkey.net/cheat-sheet/shells/reverse-shell-cheat-sheet" target="_blank">Reverse Shell Cheatsheet</a></li>
     </ul>
   </div>
 
@@ -309,10 +412,10 @@
   <div class="card">
     <div class="card-title">Privilege Escalation</div>
     <ul class="link-list">
-      <li><a href="https://book.hacktricks.xyz/linux-unix/linux-privilege-escalation-checklist" target="_blank">Linux PrivEsc — HackTricks</a></li>
-      <li><a href="https://book.hacktricks.xyz/windows/checklist-windows-privilege-escalation" target="_blank">Windows PrivEsc — HackTricks</a></li>
-      <li><a href="https://github.com/carlospolop/privilege-escalation-awesome-scripts-suite" target="_blank">PEASS-ng</a></li>
-      <li><a href="https://github.com/rebootuser/LinEnum" target="_blank">LinEnum</a></li>
+      <li><a href="https://hacktricks.wiki/en/linux-hardening/main-system-information/linux-privilege-escalation-checklist.html" target="_blank">Linux PrivEsc — HackTricks</a></li>
+      <li><a href="https://hacktricks.wiki/en/windows-hardening/checklist-windows-privilege-escalation.html" target="_blank">Windows PrivEsc — HackTricks</a></li>
+      <li><a href="https://github.com/peass-ng/PEASS-ng" target="_blank">PEASS-ng (linPEAS / winPEAS)</a></li>
+      <li><a href="https://github.com/DominicBreuker/pspy" target="_blank">pspy</a></li>
     </ul>
   </div>
 
@@ -322,8 +425,7 @@
       <li><a href="https://mxtoolbox.com/" target="_blank">MXToolbox</a></li>
       <li><a href="https://viewdns.info/" target="_blank">ViewDNS</a></li>
       <li><a href="https://centralops.net/co/" target="_blank">CentralOps</a></li>
-      <li><a href="https://networkcalc.com/subnet-calculator" target="_blank">Subnet Calculator</a></li>
-      <li><a href="https://ns.tools/" target="_blank">NS.tools</a></li>
+      <li><a href="https://networkcalc.com/subnet-calculator/" target="_blank">Subnet Calculator</a></li>
       <li><a href="https://lookup.icann.org/en" target="_blank">ICANN Lookup</a></li>
     </ul>
   </div>
@@ -343,7 +445,7 @@
   <div class="card">
     <div class="card-title">AI Tools</div>
     <ul class="link-list">
-      <li><a href="https://chat.openai.com/" target="_blank">ChatGPT</a></li>
+      <li><a href="https://chatgpt.com/" target="_blank">ChatGPT</a></li>
       <li><a href="https://claude.ai/" target="_blank">Claude</a></li>
       <li><a href="https://colab.research.google.com" target="_blank">Google Colab</a></li>
     </ul>
@@ -357,11 +459,19 @@
       <li><a href="https://www.youtube.com/channel/UClcE-kVhqyiHCcjYwcpfj9w" target="_blank">LiveOverflow — YouTube</a></li>
       <li><a href="https://infosec-conferences.com/" target="_blank">Infosec Conferences</a></li>
       <li><a href="https://underthewire.tech/" target="_blank">UnderTheWire</a></li>
+      <li><a href="https://coderedpro.com/" target="_blank">CodeRed Pro</a></li>
     </ul>
   </div>
 
 </div>
 
+<div class="bg-controls">
+  <button class="bg-toggle" id="bg-next" title="Next background (new images in Background/ are picked up automatically)">⟳ change background</button>
+  <button class="bg-toggle" id="bg-toggle" title="Pick a background">▦</button>
+</div>
+<div class="bg-panel" id="bg-panel"></div>
+
+<script src="Background/backgrounds.js"></script>
 <script>
   function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -378,10 +488,137 @@
 
   document.querySelector('.search').addEventListener('keydown', e => {
     if (e.key === 'Enter') {
+      e.preventDefault();
       const q = e.target.value.trim();
       if (q) window.location.href = `https://duckduckgo.com/?q=${encodeURIComponent(q)}`;
     }
   });
+
+  // ── Backgrounds & theme ──
+  let BGS = Array.isArray(window.STARTPAGE_BACKGROUNDS) ? window.STARTPAGE_BACKGROUNDS : [];
+  const KEY = 'startpage.bg';
+  const SHUFFLE = '__shuffle__';
+  const root = document.documentElement;
+  const heroBg = document.getElementById('hero-bg');
+  const heroContent = document.getElementById('hero-content');
+  const panel = document.getElementById('bg-panel');
+
+  function store(v) { try { localStorage.setItem(KEY, v); } catch (e) {} }
+  function recall() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
+  function bgUrl(path) { return 'Background/' + path.split('/').map(encodeURIComponent).join('/'); }
+
+  const THEME_VARS = {
+    '--bg-rgb': 'bg', '--accent-rgb': 'accent', '--accent2-rgb': 'accent2', '--text-rgb': 'text',
+    '--bg-pos': 'pos', '--hero-align': 'align', '--hero-bright': 'bright', '--surface-a': 'surface',
+  };
+
+  function resetTheme() {
+    for (const v of [...Object.keys(THEME_VARS), '--blur']) root.style.removeProperty(v);
+    heroContent.dataset.align = 'center';
+    heroBg.style.backgroundImage = '';
+  }
+
+  let current = null;
+
+  function applyBg(entry) {
+    current = entry;
+    if (!entry) return resetTheme();
+    for (const [v, k] of Object.entries(THEME_VARS)) root.style.setProperty(v, entry[k]);
+    root.style.setProperty('--blur', entry.blur + 'px');
+    heroContent.dataset.align = entry.align;
+    heroBg.style.backgroundImage = `url("${bgUrl(entry.file)}")`;
+    const img = new Image();
+    img.onerror = () => {  // listed in backgrounds.js but the file is gone
+      console.warn('[startpage] missing background:', entry.file, '- re-run update-backgrounds.py');
+      resetTheme();
+    };
+    img.src = bgUrl(entry.file);
+    markActive();
+  }
+
+  function pick() {
+    const hash = new URLSearchParams(location.hash.slice(1)).get('bg');
+    const choice = hash || recall();
+    if (choice !== SHUFFLE) {
+      const found = BGS.find(b => b.file === choice);
+      if (found) return found;
+    }
+    if (!BGS.length) return null;
+    return choice === SHUFFLE ? BGS[Math.floor(Math.random() * BGS.length)] : BGS[0];
+  }
+
+  function markActive() {
+    const choice = recall() || (BGS[0] && BGS[0].file);
+    for (const el of panel.children) el.classList.toggle('active', el.dataset.file === choice);
+  }
+
+  function buildPanel() {
+    const opts = [{ file: SHUFFLE, label: '⤨ shuffle each load' },
+                  ...BGS.map(b => ({ file: b.file, label: b.file, thumb: b.thumb }))];
+    for (const o of opts) {
+      const btn = document.createElement('button');
+      btn.className = 'bg-opt' + (o.file === SHUFFLE ? ' shuffle' : '');
+      btn.dataset.file = o.file;
+      btn.title = o.label;
+      if (o.thumb) btn.style.backgroundImage = `url("${bgUrl(o.thumb)}")`;
+      const span = document.createElement('span');
+      span.textContent = o.label;
+      btn.appendChild(span);
+      btn.addEventListener('click', () => {
+        store(o.file);
+        applyBg(o.file === SHUFFLE ? BGS[Math.floor(Math.random() * BGS.length)] : BGS.find(b => b.file === o.file));
+      });
+      panel.appendChild(btn);
+    }
+    if (!BGS.length) panel.insertAdjacentHTML('beforeend',
+      '<span style="grid-column:1/-1;color:var(--muted)">No backgrounds found. Add images to Background/ and run update-backgrounds.py</span>');
+  }
+
+  // Re-read Background/backgrounds.js (kept current by the systemd watcher) so images
+  // added since page load show up without a reload. Cache-buster forces a fresh read.
+  function refreshList(done) {
+    const s = document.createElement('script');
+    s.src = 'Background/backgrounds.js?t=' + Date.now();
+    s.onload = () => {
+      if (Array.isArray(window.STARTPAGE_BACKGROUNDS)) BGS = window.STARTPAGE_BACKGROUNDS;
+      panel.replaceChildren();
+      buildPanel();
+      markActive();
+      s.remove();
+      done();
+    };
+    s.onerror = () => { s.remove(); done(); };
+    document.head.appendChild(s);
+  }
+
+  document.getElementById('bg-next').addEventListener('click', () => refreshList(() => {
+    if (!BGS.length) return panel.classList.add('open');  // shows the "no backgrounds" hint
+    const i = BGS.findIndex(b => current && b.file === current.file);
+    const next = BGS[(i + 1) % BGS.length];
+    store(next.file);
+    applyBg(next);
+  }));
+  document.getElementById('bg-toggle').addEventListener('click', () => {
+    if (panel.classList.contains('open')) return panel.classList.remove('open');
+    refreshList(() => panel.classList.add('open'));
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') panel.classList.remove('open'); });
+  document.addEventListener('click', e => {
+    if (!panel.contains(e.target) && e.target.id !== 'bg-toggle') panel.classList.remove('open');
+  });
+
+  buildPanel();
+  applyBg(pick());
+
+  // ── HackTricks offline book: ~/hacktricks/book, home derived from this page's path ──
+  const home = location.pathname.split('/.local/share/')[0];
+  document.getElementById('ht-book').href = `file://${home}/hacktricks/book/index.html`;
+
+  // ── HackTricks container status (no-cors: resolves if anything answers) ──
+  const ht = document.getElementById('ht-status');
+  fetch('http://localhost:3337/', { mode: 'no-cors', cache: 'no-store' })
+    .then(() => { ht.classList.add('up'); ht.title = 'running'; })
+    .catch(() => { ht.classList.add('down'); ht.title = 'not running: run `hacktricks` in a shell'; });
 </script>
 
 </body>
