@@ -55,7 +55,7 @@ file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html
 
 Fully quit Firefox (all windows/processes, not just close-window) and relaunch. New tabs should now open the startpage.
 
-**Troubleshooting:**
+**Troubleshooting:** (step-by-step version for both regular Firefox and ESR, with checks and undo: [NEWTAB-SETUP.md](NEWTAB-SETUP.md))
 - Verify the path in `mozilla.cfg` matches where you placed `index.html`
 - Make sure both AutoConfig files are in the right Firefox directory
 - Firefox ESR and standard Firefox have separate install dirs — edit the right one
