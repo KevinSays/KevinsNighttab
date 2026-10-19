@@ -112,9 +112,9 @@ Copies land in `local/` (git-ignored). Needs `curl`, `jq`, `unzip`, `git`, `wget
 
 The HackTricks links expect a local [HackTricks](https://github.com/HackTricks-wiki/hacktricks) checkout at `~/hacktricks`, served by Docker on `http://localhost:3337` (the dot next to the link shows whether it's up). The "offline book" link opens `~/hacktricks/book/` from disk; its search only works through the container.
 
-## Wallpaper
+## Artwork notice
 
-The background images in `Background/` are **not my creation**. I do not know the original artists. If you are the creator of one and would like it removed or credited properly, please open an issue or contact me and I will make the change immediately.
+The background images in `Background/` are **either AI-generated or not my own work**, and I do not know their original creators. If you are the artist behind any of them and would like it removed or credited, please [open an issue](https://github.com/KevinSays/KevinsNighttab/issues) or contact me, and I will work with you to remove it or credit you properly.
 
 ## Notes
 
