@@ -5,12 +5,11 @@ This sets your new tab page to a local HTML file via Firefox AutoConfig (no exte
 ## 1. Place the startpage files
 
 ```
-mkdir -p ~/.local/share/firefox-startpage/assets
-cp index.html ~/.local/share/firefox-startpage/
-cp assets/wallpaper.png ~/.local/share/firefox-startpage/assets/
+mkdir -p ~/.local/share/firefox-startpage
+cp -r index.html Background update-backgrounds.py update-local-tools.sh ~/.local/share/firefox-startpage/
 ```
 
-To use a different wallpaper, replace `assets/wallpaper.png` with your own image (same filename), or update the `background: url(...)` line in `index.html`.
+To add backgrounds, drop images into `Background/` and run `update-backgrounds.py` (needs Python 3 + Pillow), or set up the optional systemd watcher. See the README sections "Backgrounds" and "Local / Offline tools".
 
 ## 2. Find your Firefox install dir
 

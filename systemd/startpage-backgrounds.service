@@ -1,0 +1,8 @@
+[Unit]
+Description=Regenerate firefox-startpage background themes
+
+[Service]
+Type=oneshot
+# let multi-file copies finish before scanning
+ExecStartPre=/usr/bin/sleep 2
+ExecStart=/usr/bin/python3 %h/.local/share/firefox-startpage/update-backgrounds.py

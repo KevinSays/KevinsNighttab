@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch firefox-startpage Background/ for new or removed images
+
+[Path]
+PathChanged=%h/.local/share/firefox-startpage/Background
+Unit=startpage-backgrounds.service
+
+[Install]
+WantedBy=default.target
