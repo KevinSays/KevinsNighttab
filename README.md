@@ -1,93 +1,106 @@
-# firefox-startpage
+<div align="center">
 
-![screenshot](assets/screenshot.png)
+# ▓▒░ KevinsNighttab ░▒▓
 
-A cyberpunk-themed Firefox new tab page. No extensions required — uses Firefox AutoConfig to load a local HTML file.
+**A cyberpunk new tab page for Firefox, built for hackers.**<br>
+Live clock · search · 60+ curated security links · themed backgrounds · offline tools · one-click local HackTricks
 
-**Features:**
-- Live clock and date
-- DuckDuckGo search bar
-- Link cards: hacking platforms, bug bounty, OSINT, exploit databases, crypto tools, cheatsheets, privesc, learning, and more
-- **Swappable backgrounds** — drop images into `Background/`; each one gets its own theme (palette, dimming, focal point, hero alignment) generated from the image
-- **⟳ change background** button and a thumbnail picker (with a "shuffle each load" option); picks up new images without reloading the page
-- **Local / Offline card** — offline copies of CyberChef, RevShells, GTFOBins and LOLBAS, plus a local HackTricks container with an up/down status dot
-- Monospace font stack (JetBrains Mono / Fira Code / Cascadia Code)
+<br>
 
-## Install
+![Firefox](https://img.shields.io/badge/Firefox-AutoConfig-FF7139?style=for-the-badge&logo=firefoxbrowser&logoColor=white)
+![No extensions](https://img.shields.io/badge/extensions-none-6ec6c4?style=for-the-badge)
+![Linux](https://img.shields.io/badge/Linux-Arch%20%2F%20any-1793D1?style=for-the-badge&logo=archlinux&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-optional-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
-### 1. Place the startpage files
+![KevinsNighttab](assets/screenshot.png)
+
+</div>
+
+---
+
+## Quick start
 
 ```sh
+git clone https://github.com/KevinSays/KevinsNighttab.git && cd KevinsNighttab
+
 mkdir -p ~/.local/share/firefox-startpage
 cp -r index.html Background update-backgrounds.py update-local-tools.sh ~/.local/share/firefox-startpage/
+
+sudo ./install-newtab.sh        # new tabs + homepage + launch page → the startpage
 ```
 
-`update-backgrounds.py` needs Python 3 with Pillow (`sudo pacman -S python-pillow` / `pip install pillow`).
+Quit Firefox completely (**Ctrl+Q**), reopen it, and press **Ctrl+T**.
 
-### 2. Find your Firefox install directory
+> Want new tabs only and keep session restore? `sudo ./install-newtab.sh --newtab-only`.
+> Undo everything with `sudo ./install-newtab.sh --undo`. Step-by-step guide with checks: **[INSTALL.md](INSTALL.md)**
+
+---
+
+## Features
+
+| | |
+|---|---|
+| **Clock & search** | Big live clock and date, DuckDuckGo search bar focused and ready to type |
+| **Curated link cards** | Hacking platforms, bug bounty, OSINT, exploit DBs, crypto & hashes, sandboxes, privesc, network tools, web dev, AI, learning |
+| **Themed backgrounds** | Drop an image in `Background/` and it gets its own palette, dimming, focal point and layout, generated from the image itself |
+| **Background picker** | **⟳ change background**, a thumbnail picker, and an optional shuffle on each load. New images show up without a reload |
+| **Offline tools** | Local copies of CyberChef, RevShells, GTFOBins and LOLBAS. They work with no internet |
+| **One-click HackTricks** | Click it and a local HackTricks starts in Docker. It shuts itself down when you close the tab |
+| **No extension** | Uses Firefox's built-in AutoConfig. Nothing to install from the add-on store, and it works for every profile |
+
+---
+
+## One-click local HackTricks
+
+<div align="center">
+<img src="assets/hacktricks-popup.png" alt="HackTricks setup popup" width="85%">
+</div>
+
+<br>
+
+Install the helper once (no sudo):
 
 ```sh
-which firefox          # e.g. /usr/bin/firefox → install dir is /usr/lib/firefox
-# or for Firefox ESR:
-which firefox-esr
-ls /opt/firefox-esr/   # if manually installed
+./install-hacktricks.sh
 ```
 
-### 3. Install the AutoConfig files
+Then just click **HackTricks (container)** on the startpage. New user with nothing set up? Popups walk you through it,
+asking before each step: downloading HackTricks (~350 MB), installing and starting Docker, joining the `docker` group,
+and pulling the image.
 
-Replace `YOUR_FIREFOX_DIR` with your actual path and `YOUR_USERNAME` with your Linux username.
-
-```sh
-# Edit mozilla.cfg — replace YOUR_USERNAME with your actual username
-nano mozilla.cfg
-
-# Then copy both files:
-sudo cp autoconfig.js YOUR_FIREFOX_DIR/defaults/pref/autoconfig.js
-sudo cp mozilla.cfg YOUR_FIREFOX_DIR/mozilla.cfg
+```mermaid
+flowchart LR
+    A([Click HackTricks]) --> B{Running?}
+    B -- yes --> C([Opens instantly])
+    B -- no --> D[hacktricks:// link<br>runs the helper]
+    D --> E[Setup popups<br>if anything is missing]
+    E --> F[Build book<br>only if it changed]
+    F --> G([Tab opens<br>localhost:3337])
+    G -. last tab closed + 90 s .-> H([Container stops<br>RAM freed])
 ```
 
-The path to update in `mozilla.cfg`:
-```
-file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html
-```
+- **Light.** About **20 MB of RAM** while running, instead of ~4.5 GB for `mdbook serve`.
+- **Stops itself.** It shuts down ~90 s after your last HackTricks tab closes. Open tabs keep it alive, even in the background.
+- **Fast restarts.** A few seconds, unless HackTricks changed upstream (then it rebuilds, about a minute).
+- **Local only.** It listens on `127.0.0.1`, not your Wi-Fi.
 
-### 4. Restart Firefox
+From a terminal: `hacktricks` (re)starts it, `docker stop hacktricks` stops it, and `HT_IDLE=300 hacktricks` changes the idle timeout (`0` = never stop).
 
-Fully quit Firefox (all windows/processes, not just close-window) and relaunch. New tabs should now open the startpage.
-
-**Troubleshooting:** (step-by-step version for both regular Firefox and ESR, with checks and undo: [NEWTAB-SETUP.md](NEWTAB-SETUP.md))
-- Verify the path in `mozilla.cfg` matches where you placed `index.html`
-- Make sure both AutoConfig files are in the right Firefox directory
-- Firefox ESR and standard Firefox have separate install dirs — edit the right one
-- **Standard release Firefox sandboxes AutoConfig by default**, which silently no-ops the `ChromeUtils.importESModule(...)` line in `mozilla.cfg` (no error shown). `autoconfig.js` already sets `pref("general.config.sandbox_enabled", false);` to disable that — if new tabs still show the default page, confirm this pref actually landed in the installed `autoconfig.js`.
-- **Check for a conflicting extension.** Any extension with `chrome_url_overrides.newtab` in its manifest (e.g. another new-tab-replacement addon) silently overrides AutoConfig. Check `about:addons` → Extensions and disable/remove anything else controlling the new tab page.
-
-### Optional: Set as homepage too
-
-`browser.startup.homepage` only affects the Home button and new windows — it does **not** control what loads when Firefox first launches (that's `browser.startup.page`, usually defaulting to "resume previous session"). To also show the startpage on launch, add both lines to `~/.mozilla/firefox/YOUR_PROFILE/user.js`:
-
-```js
-user_pref("browser.startup.homepage", "file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html");
-user_pref("browser.startup.page", 1);
-```
-
-This replaces session-resume behavior on launch (old tabs are still recoverable via History → Restore Previous Session). Put changes in `user.js`, not `prefs.js` — Firefox overwrites `prefs.js` from memory on exit, so direct edits there get silently reverted.
+---
 
 ## Backgrounds
 
-Put any `.png` / `.jpg` / `.webp` / `.gif` / `.bmp` / `.avif` into `Background/`, then run:
+Drop any `.png` `.jpg` `.webp` `.gif` `.bmp` `.avif` into `~/.local/share/firefox-startpage/Background/`, then run:
 
 ```sh
-~/.local/share/firefox-startpage/update-backgrounds.py
+~/.local/share/firefox-startpage/update-backgrounds.py     # needs Python 3 + Pillow
 ```
 
-This writes `Background/backgrounds.js` (palette + layout per image) and thumbnails in `Background/.thumbs/`. It has to run outside the browser: a `file://` page can't list a folder or read pixels from local images. The page re-reads `backgrounds.js` whenever you click **⟳ change background** or open the picker, so no reload is needed. With no backgrounds at all, the page falls back to the original purple theme.
+Each image gets its own theme in `Background/backgrounds.js`, with thumbnails in `Background/.thumbs/`. Force one with a URL hash,
+e.g. `index.html#bg=LoneHacker.png`. With no images, the page falls back to the original purple theme.
 
-You can force a background with a URL hash, e.g. `index.html#bg=LoneHacker.png`.
-
-### Optional: regenerate automatically
-
-A systemd user path unit re-runs the script whenever `Background/` changes:
+<details>
+<summary><b>Regenerate automatically when the folder changes (systemd)</b></summary>
 
 ```sh
 mkdir -p ~/.config/systemd/user
@@ -100,42 +113,89 @@ systemctl --user disable --now startpage-backgrounds.path  # turn it off
 ```
 
 The script only rewrites `backgrounds.js` when its content changes, so its own write doesn't re-trigger the watcher.
+It has to run outside the browser, because a `file://` page can't list a folder or read pixels from local images.
+</details>
 
-## Local / Offline tools
+---
+
+## Offline tools
 
 ```sh
 ~/.local/share/firefox-startpage/update-local-tools.sh            # download / refresh all (~95 MB)
-~/.local/share/firefox-startpage/update-local-tools.sh cyberchef  # or one: cyberchef|revshells|gtfobins|lolbas
+~/.local/share/firefox-startpage/update-local-tools.sh cyberchef  # or one: cyberchef | revshells | gtfobins | lolbas
 ```
 
 Copies land in `local/` (git-ignored). Needs `curl`, `jq`, `unzip`, `git`, `wget`.
 
-The HackTricks links expect a local [HackTricks](https://github.com/HackTricks-wiki/hacktricks) checkout at `~/hacktricks`, served by Docker on `http://localhost:3337` (the dot next to the link shows whether it's up). Run `./install-hacktricks.sh` once and clicking the link starts the container (it stops itself ~90 s after the last HackTricks tab closes), with popups that walk new users through installing Docker and downloading HackTricks (see [INSTALL.md](INSTALL.md#optional-one-click-local-hacktricks)). The "offline book" link opens `~/hacktricks/book/` from disk; its search only works through the container.
+---
+
+<details>
+<summary><b>Troubleshooting</b></summary>
+
+<br>
+
+| Symptom | Fix |
+|---|---|
+| New tab still shows Firefox's default page | Firefox wasn't fully quit: `pgrep -a firefox` must print nothing. Or the files are in the wrong install dir, see [INSTALL.md § 2](INSTALL.md#2-find-your-firefox-install-directory) |
+| Files are right but still the default | `mozilla.cfg` line 1 must be `//`, and `autoconfig.js` needs `sandbox_enabled false` (regular Firefox silently ignores the config without it) |
+| An old or other page shows | Another extension controls new tabs. Disable it in `about:addons` |
+| HackTricks popup says "the helper never answered" | Run `./install-hacktricks.sh`, then click the link again |
+| HackTricks says reboot | The kernel was updated without a reboot, so Docker's networking modules are gone. Reboot |
+
+More in [INSTALL.md](INSTALL.md#troubleshooting) and [NEWTAB-SETUP.md](NEWTAB-SETUP.md).
+</details>
+
+<details>
+<summary><b>Customizing</b></summary>
+
+<br>
+
+- **Links:** edit the cards in `index.html`. Each `.card` block is self-contained.
+- **Colors:** theme colors are CSS variables at the top of the `<style>` block, as RGB triplets (`--accent-rgb` etc.) so each
+  background can override them. Use `rgba(var(--accent-rgb), …)` instead of hardcoded colors.
+- **Profiles:** AutoConfig applies to every profile of that Firefox install.
+- **Upgrades:** on Arch the pacman package doesn't own the AutoConfig files, so updates leave them alone. Manual `/opt` installs
+  may need `sudo ./install-newtab.sh` again after an upgrade.
+</details>
+
+<details>
+<summary><b>File structure</b></summary>
+
+<br>
+
+```
+KevinsNighttab/
+├── index.html                 # the startpage
+├── Background/
+│   ├── *.png                  # background images (add/remove freely)
+│   ├── backgrounds.js         # generated: per-image theme + layout
+│   └── .thumbs/               # generated: picker thumbnails
+├── update-backgrounds.py      # regenerates Background/backgrounds.js
+├── update-local-tools.sh      # downloads offline tool copies into local/
+├── install-newtab.sh          # installs the Firefox AutoConfig files (sudo)
+├── install-hacktricks.sh      # installs the one-click HackTricks helper
+├── hacktricks/
+│   ├── hacktricks-start       # setup popups + starts the container
+│   ├── hacktricks-handler.desktop   # handles hacktricks:// links
+│   └── serve.py               # light book server with idle shutdown
+├── systemd/                   # optional watcher for Background/
+├── autoconfig.js, mozilla.cfg # AutoConfig templates (the installer writes its own)
+├── INSTALL.md, NEWTAB-SETUP.md
+└── assets/                    # README screenshots
+```
+</details>
+
+---
 
 ## Artwork notice
 
-The background images in `Background/` are **either AI-generated or not my own work**, and I do not know their original creators. If you are the artist behind any of them and would like it removed or credited, please [open an issue](https://github.com/KevinSays/KevinsNighttab/issues) or contact me, and I will work with you to remove it or credit you properly.
+The background images in `Background/` are **either AI-generated or not my own work**, and I do not know their original creators.
+If you are the artist behind any of them and would like it removed or credited, please
+[open an issue](https://github.com/KevinSays/KevinsNighttab/issues) or contact me, and I will work with you to remove it or credit you properly.
 
-## Notes
+<div align="center">
+<br>
 
-- **Package updates**: `mozilla.cfg` lives in the Firefox install dir and may be overwritten by major upgrades. Re-copy it after updates.
-- **Multiple profiles**: The AutoConfig applies to all profiles in that Firefox install.
-- **Customizing links**: Edit the cards directly in `index.html` — each `.card` block is self-contained.
-- **Colors**: Theme colors are CSS variables at the top of the `<style>` block, set as RGB triplets (`--accent-rgb` etc.) so each background can override them. Use `rgba(var(--accent-rgb), …)` rather than hardcoding colors.
+Made by **[KevinSays](https://github.com/KevinSays)** · Star the repo if it lives in your new tab
 
-## File Structure
-
-```
-firefox-startpage/
-├── index.html               # The startpage
-├── Background/
-│   ├── *.png                # Background images (add/remove freely)
-│   ├── backgrounds.js       # Generated: per-image theme + layout
-│   └── .thumbs/             # Generated: picker thumbnails
-├── update-backgrounds.py    # Regenerates Background/backgrounds.js
-├── update-local-tools.sh    # Downloads offline tool copies into local/
-├── systemd/                 # Optional watcher for Background/
-├── assets/screenshot.png
-├── autoconfig.js            # Tells Firefox to load mozilla.cfg
-└── mozilla.cfg              # Redirects new tab to the local HTML file
-```
+</div>
