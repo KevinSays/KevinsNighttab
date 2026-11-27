@@ -110,7 +110,7 @@ The script only rewrites `backgrounds.js` when its content changes, so its own w
 
 Copies land in `local/` (git-ignored). Needs `curl`, `jq`, `unzip`, `git`, `wget`.
 
-The HackTricks links expect a local [HackTricks](https://github.com/HackTricks-wiki/hacktricks) checkout at `~/hacktricks`, served by Docker on `http://localhost:3337` (the dot next to the link shows whether it's up). The "offline book" link opens `~/hacktricks/book/` from disk; its search only works through the container.
+The HackTricks links expect a local [HackTricks](https://github.com/HackTricks-wiki/hacktricks) checkout at `~/hacktricks`, served by Docker on `http://localhost:3337` (the dot next to the link shows whether it's up). Run `./install-hacktricks.sh` once and clicking the link starts the container (it stops itself ~90 s after the last HackTricks tab closes), with popups that walk new users through installing Docker and downloading HackTricks (see [INSTALL.md](INSTALL.md#optional-one-click-local-hacktricks)). The "offline book" link opens `~/hacktricks/book/` from disk; its search only works through the container.
 
 ## Artwork notice
 

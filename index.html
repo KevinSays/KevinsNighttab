@@ -143,6 +143,24 @@
     box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.2);
   }
 
+  /* ── GitHub link under the search bar ── */
+  .gh-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: -10px;            /* sit closer to the search bar than the hero's 22px gap */
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s, filter 0.2s;
+  }
+  .gh-link svg { width: 14px; height: 14px; }
+  .gh-link:hover {
+    color: var(--accent);
+    filter: drop-shadow(0 0 8px rgba(var(--accent-rgb), 0.45));
+  }
+
   /* ── Grid ── */
   .grid {
     display: grid;
@@ -221,6 +239,63 @@
   }
   .status.up   { background: #5fd38d; box-shadow: 0 0 6px #5fd38d; }
   .status.down { background: #d35f5f; }
+  .status.starting { background: #e0b050; box-shadow: 0 0 6px #e0b050; animation: ht-pulse 1.2s ease-in-out infinite; }
+  @keyframes ht-pulse { 50% { opacity: 0.35; } }
+
+  /* HackTricks setup / progress popup */
+  .ht-modal {
+    position: fixed; inset: 0; z-index: 50;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(3px);
+  }
+  .ht-modal.open { display: flex; }
+  .ht-box {
+    width: min(480px, calc(100vw - 32px));
+    padding: 20px 22px 18px;
+    background: rgba(var(--bg-rgb), 0.97);
+    border: 1px solid var(--border-hi);
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    color: var(--text);
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+  .ht-box h2 {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 0 12px;
+    font-size: 0.95rem; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  .ht-box h2 .status { margin-left: 0; width: 8px; height: 8px; }
+  .ht-close {
+    margin-left: auto; background: none; border: none; cursor: pointer;
+    color: rgba(var(--text-rgb), 0.6); font: inherit; font-size: 1.1rem;
+  }
+  .ht-close:hover { color: var(--accent); }
+  .ht-msg { margin: 0 0 12px; white-space: pre-line; }
+  .ht-hint, .ht-help {
+    margin: 0 0 12px; padding: 8px 10px;
+    border-left: 2px solid var(--border-hi);
+    background: rgba(var(--accent-rgb), 0.06);
+    color: rgba(var(--text-rgb), 0.85);
+  }
+  .ht-help { display: none; }
+  .ht-help.show { display: block; }
+  .ht-box code {
+    padding: 1px 5px; border-radius: 2px;
+    background: rgba(var(--accent-rgb), 0.12); color: var(--accent2);
+    user-select: all;
+  }
+  .ht-box ol { margin: 6px 0 0; padding-left: 20px; }
+  .ht-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .ht-actions button {
+    padding: 5px 12px; cursor: pointer; font: inherit; font-size: 0.8rem;
+    background: rgba(var(--accent-rgb), 0.12); color: var(--text);
+    border: 1px solid var(--border-hi); border-radius: 3px;
+  }
+  .ht-actions button:hover { background: rgba(var(--accent-rgb), 0.25); }
+  .ht-actions button[hidden] { display: none; }
 
   /* ── Background picker ── */
   .bg-controls {
@@ -309,6 +384,10 @@
     <form class="search-wrap" action="https://duckduckgo.com/" target="_self">
       <input class="search" name="q" type="text" placeholder="search the web..." autofocus autocomplete="off" spellcheck="false">
     </form>
+    <a class="gh-link" href="https://github.com/KevinSays" target="_blank" rel="noopener" title="KevinSays on GitHub">
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      github.com/KevinSays
+    </a>
   </div>
 </div>
 
@@ -317,7 +396,7 @@
   <div class="card local">
     <div class="card-title">Local / Offline</div>
     <ul class="link-list">
-      <li><a href="http://localhost:3337/" target="_blank" title="Docker container: start with `hacktricks` in a shell">HackTricks (container) <span class="status" id="ht-status"></span></a></li>
+      <li><a id="ht-link" href="http://localhost:3337/" target="_blank" title="Docker container: click to start it if it isn't running">HackTricks (container) <span class="status" id="ht-status"></span></a></li>
       <li><a id="ht-book" href="#" target="_blank" title="~/hacktricks/book, last build on disk; search needs the container">HackTricks (offline book)</a></li>
       <li><a href="local/CyberChef/index.html" target="_blank">CyberChef</a></li>
       <li><a href="local/revshells/index.html" target="_blank">RevShells Generator</a></li>
@@ -471,6 +550,31 @@
 </div>
 <div class="bg-panel" id="bg-panel"></div>
 
+<div class="ht-modal" id="ht-modal" role="dialog" aria-modal="true" aria-labelledby="ht-title">
+  <div class="ht-box">
+    <h2 id="ht-title"><span class="status starting" id="ht-mdot"></span> HackTricks (local)
+      <button class="ht-close" id="ht-close" title="Close (setup keeps going in the background)">×</button></h2>
+    <p class="ht-msg" id="ht-msg">Starting…</p>
+    <p class="ht-hint" id="ht-hint">If Firefox asks to open a <b>hacktricks</b> link, tick
+      <b>Always allow</b> and choose <b>Open</b>. Any setup questions (downloads, Docker)
+      appear in small popup windows.</p>
+    <div class="ht-help" id="ht-help">
+      <b>Nothing happening?</b> The HackTricks helper probably isn't installed yet.
+      <ol>
+        <li>Open a terminal in the KevinsNighttab folder you downloaded.</li>
+        <li>Run <code>./install-hacktricks.sh</code></li>
+        <li>Come back here and click <b>Try again</b>.</li>
+      </ol>
+      Prefer the online version? <a href="https://hacktricks.wiki/" target="_blank">hacktricks.wiki</a>
+    </div>
+    <div class="ht-actions">
+      <button id="ht-retry" hidden>Try again</button>
+      <button id="ht-open" hidden>Open HackTricks</button>
+      <button id="ht-hide">Close</button>
+    </div>
+  </div>
+</div>
+
 <script src="Background/backgrounds.js"></script>
 <script>
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -615,10 +719,96 @@
   document.getElementById('ht-book').href = `file://${home}/hacktricks/book/index.html`;
 
   // ── HackTricks container status (no-cors: resolves if anything answers) ──
-  const ht = document.getElementById('ht-status');
-  fetch('http://localhost:3337/', { mode: 'no-cors', cache: 'no-store' })
-    .then(() => { ht.classList.add('up'); ht.title = 'running'; })
-    .catch(() => { ht.classList.add('down'); ht.title = 'not running: run `hacktricks` in a shell'; });
+  // Clicking the link while it's down fires hacktricks://start, which the
+  // hacktricks-handler.desktop link handler turns into `hacktricks-start --open`
+  // (a file:// page can't run commands itself). The script walks a new user
+  // through setup in popup dialogs, writes its progress to hacktricks-status.js
+  // (re-read here, like backgrounds.js), and opens a tab when the book is ready.
+  const HT_URL = 'http://localhost:3337/';
+  const HELPER_WAIT = 15e3;   // no word from the script by then → helper not installed
+  const $ = id => document.getElementById(id);
+  const ht = $('ht-status'), htLink = $('ht-link'), htModal = $('ht-modal');
+  let htState = 'unknown', htPoll = null, htT0 = 0;
+
+  const htDot = (el, state) => { el.classList.remove('up', 'down', 'starting'); el.classList.add(state); };
+  const htSet = (state, title) => { htState = state; htDot(ht, state); ht.title = title; };
+  const htCheck = () => fetch(HT_URL, { mode: 'no-cors', cache: 'no-store' }).then(() => true, () => false);
+  const htReadStatus = () => new Promise(res => {
+    const s = document.createElement('script');
+    s.src = 'hacktricks-status.js?t=' + Date.now();
+    s.onload = s.onerror = () => { s.remove(); res(window.HT_STATUS); };
+    document.head.appendChild(s);
+  });
+
+  const htShow = (dot, msg, { retry = false, open = false, help = false, hint = true } = {}) => {
+    htDot($('ht-mdot'), dot);
+    $('ht-msg').textContent = msg;
+    $('ht-retry').hidden = !retry;
+    $('ht-open').hidden = !open;
+    $('ht-help').classList.toggle('show', help);
+    $('ht-hint').style.display = hint ? '' : 'none';
+  };
+  const htClose = () => htModal.classList.remove('open');
+
+  const htStop = (state, title) => { clearInterval(htPoll); htPoll = null; htSet(state, title); };
+
+  const htTick = async () => {
+    if (await htCheck()) {
+      htStop('up', 'running');
+      htShow('up', 'Ready! It opened in a new tab.', { open: true, hint: false });
+      return;
+    }
+    const st = await htReadStatus();
+    const fresh = st && st.t >= htT0 - 2000;
+    if (!fresh) {
+      if (Date.now() - htT0 > HELPER_WAIT) {
+        htStop('down', 'not running: click to start');
+        htShow('down', 'The helper never answered.', { retry: true, help: true, hint: false });
+      }
+      return;
+    }
+    if (st.state === 'error' || st.state === 'cancelled') {
+      htStop('down', 'not running: click to start');
+      htShow('down', st.msg, { retry: true, hint: false });
+    } else if (st.state === 'ready') {
+      htStop('up', 'running');
+      htShow('up', 'Ready! It opened in a new tab.', { open: true, hint: false });
+    } else {
+      htShow('starting', st.msg, { hint: st.state === 'checking' });
+    }
+  };
+
+  const htStart = () => {
+    htT0 = Date.now();
+    htSet('starting', 'starting… (click for details)');
+    htShow('starting', 'Asking the helper to start HackTricks…');
+    htModal.classList.add('open');
+    location.href = 'hacktricks://start';      // external handler; this page stays put
+    clearInterval(htPoll);
+    htPoll = setInterval(htTick, 2000);
+  };
+
+  htCheck().then(ok => ok ? htSet('up', 'running')
+                          : htSet('down', 'not running: click to start'));
+
+  // It stops itself after ~90 s with no HackTricks tab open, so the dot can be stale:
+  // check on every click (fast on localhost, well inside Firefox's popup allowance).
+  htLink.addEventListener('click', async e => {
+    e.preventDefault();
+    if (htState === 'starting') { htModal.classList.add('open'); return; }  // just show progress
+    if (await htCheck()) { htSet('up', 'running'); window.open(HT_URL, '_blank'); return; }
+    htStart();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || htState === 'starting') return;
+    htCheck().then(ok => ok ? htSet('up', 'running') : htSet('down', 'not running: click to start'));
+  });
+  $('ht-retry').addEventListener('click', htStart);
+  $('ht-open').addEventListener('click', () => { window.open(HT_URL, '_blank'); htClose(); });
+  $('ht-hide').addEventListener('click', htClose);
+  $('ht-close').addEventListener('click', htClose);
+  htModal.addEventListener('click', e => { if (e.target === htModal) htClose(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') htClose(); });
 </script>
 
 </body>

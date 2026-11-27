@@ -1,0 +1,273 @@
+#!/usr/bin/env bash
+# Start the local HackTricks container (http://localhost:3337) if it isn't running,
+# walking a new user through anything that's missing (Docker, the download, etc).
+# It serves the pre-built book with serve.py and stops itself HT_IDLE seconds
+# (default 90) after the last HackTricks tab closes. HT_IDLE=0 = never.
+#
+#   hacktricks-start            start if needed, wait until it answers
+#   hacktricks-start --restart  remove any running/stale container and start fresh
+#   hacktricks-start --open     also open it in the browser once it's up
+#   hacktricks-start --gui      use popup dialogs (automatic when run without a terminal)
+#
+# The startpage's "HackTricks (container)" link calls this through the
+# hacktricks:// link handler (hacktricks-handler.desktop) as `--open`.
+# Progress is written to <startpage>/hacktricks-status.js so the page can show it.
+set -uo pipefail
+
+URL=http://localhost:3337/
+DIR=${HACKTRICKS_DIR:-$HOME/hacktricks}
+STARTPAGE=${STARTPAGE_DIR:-$HOME/.local/share/firefox-startpage}
+REPO=https://github.com/HackTricks-wiki/hacktricks.git
+IMAGE=ghcr.io/hacktricks-wiki/hacktricks-cloud/translator-image
+BRANCH=master          # English. There is no "en" branch.
+NAME=hacktricks
+WAIT=600               # a full book build can take a few minutes on slow machines
+ME=$(readlink -f "$0")
+IDLE=${HT_IDLE:-90}    # stop after this many seconds with no HackTricks tab open; 0 = never
+SERVE=${HT_SERVE:-${XDG_DATA_HOME:-$HOME/.local/share}/hacktricks-start/serve.py}
+[[ -f $SERVE ]] || SERVE=$(dirname "$ME")/serve.py    # running from the repo folder
+
+restart=0 open=0 gui=0
+[[ -t 0 || -t 1 ]] || gui=1
+for a in "$@"; do
+  case $a in
+    --restart) restart=1 ;;
+    --open)    open=1; gui=1 ;;
+    --gui)     gui=1 ;;
+    hacktricks:*) ;;    # the URL the link handler passes in; ignored
+    *) echo "Unknown option: $a" >&2; exit 2 ;;
+  esac
+done
+command -v zenity >/dev/null || gui=0
+
+# ── output: terminal, popups, and the startpage's status file ────────────────
+log() { echo "[hacktricks] $*"; }
+
+status() {   # status <state> <message>   (read by index.html)
+  local f=$STARTPAGE/hacktricks-status.js msg=${2//\\/\\\\}
+  msg=${msg//\"/\\\"}; msg=${msg//$'\n'/ }
+  [[ -d $STARTPAGE ]] &&
+    printf 'window.HT_STATUS = {state: "%s", msg: "%s", t: %s};\n' "$1" "$msg" "$(date +%s%3N)" >"$f.tmp" &&
+    mv -f "$f.tmp" "$f"
+  true
+}
+
+note() {     # short, non-blocking
+  log "$*"
+  (( gui )) && command -v notify-send >/dev/null &&
+    notify-send -a HackTricks -i utilities-terminal "HackTricks" "$*" 2>/dev/null
+  true
+}
+
+fail() {     # fail <message>: show an error and stop
+  status error "$1"
+  if (( gui )); then
+    zenity --error --title="HackTricks" --width=440 --no-markup --text="$1" 2>/dev/null
+  else
+    echo "[hacktricks] ERROR: $1" >&2
+  fi
+  exit 1
+}
+
+ask() {      # ask <question> <yes label>: 0 = yes
+  if (( gui )); then
+    zenity --question --title="HackTricks setup" --width=460 --no-markup \
+      --ok-label="$2" --cancel-label="Not now" --text="$1" 2>/dev/null
+  else
+    local r; echo; echo "$1"; read -rp "$2? [Y/n] " r; [[ ! $r =~ ^[Nn] ]]
+  fi
+}
+
+cancelled() { status cancelled "Setup was cancelled. Click the link again when you're ready."; log "cancelled"; exit 1; }
+
+# Run a command that needs sudo. In a terminal: right here. From the browser: in a
+# new terminal window, so the password is typed where the user can see what runs.
+as_root() {  # as_root <description> <command>
+  local cmd=$2
+  if (( ! gui )); then
+    echo "> sudo sh -c '$cmd'"; sudo sh -c "$cmd"; return
+  fi
+  local wrapped
+  wrapped="echo; echo 'HackTricks setup: $1'; echo; echo '  sudo sh -c \"$cmd\"'; echo;
+    if sudo sh -c '$cmd'; then echo; echo 'Done. This window closes in 3 seconds.'; sleep 3;
+    else echo; echo 'That failed (see above).'; read -rp 'Press Enter to close… ' _; exit 1; fi"
+  local t
+  for t in "${TERMINAL:-}" xdg-terminal-exec kitty foot alacritty ghostty wezterm konsole gnome-terminal xterm; do
+    [[ -n $t ]] && command -v "${t%% *}" >/dev/null || continue
+    case ${t##*/} in
+      xdg-terminal-exec|kitty|foot) "$t" bash -c "$wrapped" ;;
+      wezterm)        wezterm start -- bash -c "$wrapped" ;;
+      gnome-terminal) gnome-terminal --wait -- bash -c "$wrapped" ;;
+      *)              $t -e bash -c "$wrapped" ;;    # alacritty, ghostty, konsole, xterm, $TERMINAL
+    esac
+    return
+  done
+  zenity --info --title="HackTricks setup" --width=480 --no-markup \
+    --text="Couldn't find a terminal to open. Run this yourself, then click the link again:
+
+sudo sh -c \"$cmd\"" 2>/dev/null
+  return 1
+}
+
+# Show a pulsing progress window while a command runs; Cancel kills it.
+with_progress() {  # with_progress <text> <command...>
+  local text=$1; shift
+  if (( ! gui )); then log "$text"; "$@"; return; fi
+  "$@" &
+  local pid=$!
+  ( while kill -0 "$pid" 2>/dev/null; do echo "# $text"; sleep 1; done; echo 100 ) |
+    zenity --progress --pulsate --auto-close --no-cancel --title="HackTricks" --width=440 --text="$text" 2>/dev/null &
+  wait "$pid"
+}
+
+up() { curl -fs -o /dev/null --max-time 2 "$URL"; }
+opened() { (( open )) && { xdg-open "$URL" >/dev/null 2>&1 & } ; true; }
+in_group() { id -nG "$USER" | tr ' ' '\n' | grep -qx docker; }        # this session
+listed_in_group() { getent group docker | cut -d: -f4 | tr ',' '\n' | grep -qx "$USER"; }  # /etc/group
+
+# ── one starter at a time (double clicks, page + shell) ─────────────────────
+exec 9>"${XDG_RUNTIME_DIR:-/tmp}/hacktricks-start.lock"
+if ! flock -n 9; then
+  log "already starting; waiting for it"; flock 9; up && opened; exit 0
+fi
+
+status checking "Checking what's needed…"
+
+if (( ! restart )) && up; then
+  status ready "Running at $URL"; log "already running at $URL"; opened; exit 0
+fi
+
+# ── 1. HackTricks checkout ──────────────────────────────────────────────────
+if [[ ! -d $DIR/.git ]]; then
+  status need-download "Waiting for you to confirm the HackTricks download"
+  ask "HackTricks isn't downloaded yet.
+
+Download it now? It's about 350 MB and goes into:
+$DIR" "Download" || cancelled
+  command -v git >/dev/null || fail "git isn't installed. Install it (Arch: sudo pacman -S git), then click the link again."
+  status downloading "Downloading HackTricks (~350 MB)…"
+  with_progress "Downloading HackTricks (~350 MB)…" \
+    git clone -q --depth 1 --branch "$BRANCH" "$REPO" "$DIR" ||
+    fail "Downloading HackTricks failed. Check your internet connection and try again."
+fi
+
+# ── 2. Docker installed ─────────────────────────────────────────────────────
+if ! command -v docker >/dev/null; then
+  status need-docker "Docker isn't installed"
+  if command -v pacman >/dev/null; then
+    ask "HackTricks runs in Docker, which isn't installed.
+
+Install it now? A terminal opens and asks for your password to run:
+  pacman -S docker
+  systemctl enable --now docker.socket
+  usermod -aG docker $USER
+
+Note: members of the docker group can control Docker, which is effectively root access." "Install Docker" || cancelled
+    status installing "Installing Docker (see the terminal window)…"
+    as_root "install Docker" "pacman -S --needed --noconfirm docker && systemctl enable --now docker.socket && usermod -aG docker $USER" ||
+      fail "Installing Docker didn't finish. Click the link to try again."
+    command -v docker >/dev/null || fail "Docker still isn't installed. Click the link to try again."
+  else
+    fail "HackTricks runs in Docker, which isn't installed. Install Docker for your distro (https://docs.docker.com/engine/install/), then click the link again."
+  fi
+fi
+
+# ── 3. Docker group ─────────────────────────────────────────────────────────
+if ! listed_in_group; then
+  status need-group "You're not in the docker group"
+  ask "To start containers without typing your password every time, you need to be in the docker group.
+
+Add $USER to it now? A terminal opens and asks for your password.
+
+Note: members of the docker group can control Docker, which is effectively root access." "Add me" || cancelled
+  as_root "add $USER to the docker group" "usermod -aG docker $USER" || fail "Adding you to the docker group didn't finish."
+fi
+# Newly added: this session doesn't have the group until you log out and back
+# in, so re-run this script under `newgrp docker` (no password needed).
+if ! in_group && listed_in_group && [[ -z ${HT_NEWGRP:-} ]]; then
+  exec 9>&-
+  printf 'HT_NEWGRP=1 exec %q ' "$ME" "$@" | newgrp docker
+  exit $?
+fi
+
+# ── 4. Docker daemon reachable ──────────────────────────────────────────────
+if ! docker info >/dev/null 2>&1; then
+  if [[ ! -d /usr/lib/modules/$(uname -r) ]]; then
+    fail "Docker can't start until you reboot.
+
+Your kernel was updated, but the running kernel ($(uname -r)) is the old one, and its modules (needed for Docker's networking) were removed. Reboot, then click the link again."
+  fi
+  if ! systemctl is-active -q docker.socket && ! systemctl is-active -q docker.service; then
+    status need-start "Docker isn't running"
+    ask "Docker is installed but not running.
+
+Start it now (and automatically from now on)? A terminal opens and asks for your password to run:
+  systemctl enable --now docker.socket" "Start Docker" || cancelled
+    as_root "start Docker" "systemctl enable --now docker.socket" || fail "Starting Docker didn't finish."
+  fi
+  if ! docker info >/dev/null 2>&1; then
+    fail "Docker is installed but isn't answering.
+
+Check it in a terminal:
+  systemctl status docker
+  journalctl -u docker -n 30"
+  fi
+fi
+
+# ── 5. Image ────────────────────────────────────────────────────────────────
+if ! docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  status pulling "Downloading the HackTricks Docker image (one time, can take several minutes)…"
+  with_progress "Downloading the HackTricks Docker image. One time only; this can take several minutes…" \
+    docker pull -q --platform linux/amd64 "$IMAGE" >/dev/null ||
+    fail "Downloading the Docker image failed. Check your internet connection and try again."
+fi
+
+# ── 6. Run ──────────────────────────────────────────────────────────────────
+running=$(docker ps -q -f "name=^${NAME}\$")
+if [[ -n $running ]] && (( ! restart )); then
+  log "container is up, waiting for the book to answer"
+else
+  docker rm -f "$NAME" >/dev/null 2>&1    # --rm containers can't be restarted; clear stale ones
+
+  # Only pull when GitHub is reachable, otherwise serve what's on disk.
+  pull=true
+  if timeout 8 git -C "$DIR" ls-remote --exit-code origin HEAD >/dev/null 2>&1; then
+    pull="git pull --ff-only || true"
+  else
+    log "GitHub unreachable, serving the copy on disk"
+  fi
+
+  # Published on 127.0.0.1 only: a bare -p 3337:3000 listens on every interface
+  # (LAN/Wi-Fi too), and Docker-published ports get around most host firewalls.
+  # Branch is hardcoded inside the container. Don't rely on $LANG: it's the
+  # host locale (en_US.UTF-8), `git checkout` fails, and --rm hides why.
+  #
+  # Build the book only when the checkout changed (book/.built-rev), then serve it
+  # with serve.py: a few MB instead of `mdbook serve`'s ~4.5 GB, and it exits
+  # (deleting the --rm container) after $IDLE seconds with no HackTricks tab open.
+  [[ -f $SERVE ]] || fail "Missing $SERVE. Re-run ./install-hacktricks.sh from the KevinsNighttab folder."
+  docker run -d --rm --platform linux/amd64 -p 127.0.0.1:3337:3000 --name "$NAME" \
+    -v "$DIR":/app -v "$SERVE":/serve.py:ro -e HT_IDLE="$IDLE" "$IMAGE" \
+    bash -c "cd /app && git config --global --add safe.directory /app && git checkout $BRANCH && { $pull; } &&
+      rev=\$(git rev-parse HEAD) &&
+      if [ \"\$(cat book/.built-rev 2>/dev/null)\" != \"\$rev\" ]; then
+        echo 'building book' && MDBOOK_PREPROCESSOR__HACKTRICKS__ENV=dev mdbook build && echo \"\$rev\" > book/.built-rev;
+      fi && exec python3 /serve.py /app/book 3000" \
+    >/dev/null || fail "Starting the container failed. Run this in a terminal to see why:
+  hacktricks-start --restart"
+fi
+
+status building "Starting HackTricks. If it changed since last time the book is rebuilt (about a minute); a tab opens when it's ready."
+note "Starting. A tab opens when it's ready."
+for ((i = 0; i < WAIT; i += 3)); do
+  if up; then
+    status ready "Ready at $URL"; note "Ready at $URL"; opened; exit 0
+  fi
+  if [[ -z $(docker ps -q -f "name=^${NAME}\$") ]]; then
+    fail "The container stopped before the book was ready. Run this in a terminal to see why:
+  hacktricks-start --restart"
+  fi
+  sleep 3
+done
+fail "Still not answering after $((WAIT / 60)) minutes. Check the logs in a terminal:
+  docker logs $NAME"

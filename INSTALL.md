@@ -179,6 +179,40 @@ systemctl --user enable --now startpage-backgrounds.path
 
 Needs `wget` (see step 0). It fails partway through without it.
 
+## Optional: one-click local HackTricks
+
+The **HackTricks (container)** link can start a local HackTricks (Docker, `http://localhost:3337`)
+for you. Install the helper once (no sudo):
+
+```sh
+./install-hacktricks.sh
+```
+
+Then click the link on the startpage:
+
+1. Firefox asks once whether to open the `hacktricks` link. Tick **Always allow** and choose **Open**.
+2. Popups walk you through anything missing, asking first each time:
+   - **HackTricks itself** (~350 MB) is downloaded to `~/hacktricks`.
+   - **Docker** is installed and started. This opens a terminal for your sudo password.
+   - **The `docker` group**: you're added to it. Members of this group effectively have root.
+   - **The HackTricks Docker image** is downloaded once.
+3. The first build of the book takes ~5 minutes. The startpage shows progress, and a tab opens when it's ready.
+
+After that, clicking the link opens it, starting it first if needed.
+
+**It stops itself when you're done.** While any HackTricks tab is open, the page pings the
+container to keep it running. About **90 seconds after you close the last HackTricks tab**, it
+exits and frees its memory. The next click starts it again in a few seconds. The book is only
+rebuilt (about a minute) when HackTricks has changed upstream. While running it uses ~20 MB of RAM.
+
+From a terminal:
+- `hacktricks` (re)starts it.
+- `docker stop hacktricks` stops it now.
+- Change the idle time with `HT_IDLE=300 hacktricks`, or `HT_IDLE=0 hacktricks` to keep it running
+  until you stop it.
+
+Needs `zenity` for the popups (`sudo pacman -S zenity`). Undo: `./install-hacktricks.sh --undo`.
+
 ---
 
 ## Troubleshooting
@@ -190,6 +224,8 @@ Needs `wget` (see step 0). It fails partway through without it.
 | Another page/old copy shows | An extension is controlling new tabs (step 4). New Tab Override's "local file" mode keeps a stale copy. |
 | Blank/"file not found" tab | Path in `mozilla.cfg` is wrong (e.g. `/root/...` from running `$HOME` inside sudo, or a typo). Re-run step 3. |
 | New tabs work but launch/Home doesn't | Installed with `--newtab-only`, or an older `mozilla.cfg` without the two `pref(...)` lines. Re-run step 3 without the flag. Also remove any `browser.startup.*` lines from a `user.js` in your profile (`about:support` → Profile Folder) so the two don't fight. |
+| HackTricks popup says "the helper never answered" | Run `./install-hacktricks.sh`. If Firefox's "open hacktricks link" prompt was dismissed, click the link again. If you clicked **Cancel** with "always" ticked, reset it in `about:preferences` → Applications → *hacktricks*. |
+| HackTricks: "Docker can't start until you reboot" | The kernel was updated but not rebooted, so Docker's networking modules are gone. Reboot. |
 | Worked, then stopped after an update | The install dir was replaced (common for manual `/opt` ESR). Re-run step 3. On Arch the pacman package doesn't own these files, so `pacman -Syu` leaves them alone. |
 
 ## Undo

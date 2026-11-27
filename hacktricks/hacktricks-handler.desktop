@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=HackTricks (start container)
+Comment=Starts the local HackTricks container for the startpage's hacktricks:// link
+Exec=sh -c '"$HOME/.local/bin/hacktricks-start" --open "$1"' sh %u
+Icon=utilities-terminal
+Terminal=false
+NoDisplay=true
+MimeType=x-scheme-handler/hacktricks;
