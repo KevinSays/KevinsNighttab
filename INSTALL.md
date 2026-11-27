@@ -1,6 +1,8 @@
 # Firefox Startpage: Install Instructions
 
-This makes Firefox's **new tab** open a local HTML file using Firefox AutoConfig. No extension needed.
+This makes Firefox open a local HTML file for **new tabs**, the **Home button / new windows**,
+and **on launch**, using Firefox AutoConfig. No extension needed. It applies to every profile of
+that Firefox install.
 
 Every step ends with a **Check** you can run before moving on. All commands assume you are in
 this folder (the one with `index.html` in it).
@@ -63,10 +65,23 @@ This is the folder that holds the real `firefox` binary, **not** your profile fo
 ```sh
 sudo ./install-newtab.sh                    # regular Firefox, /usr/lib/firefox
 sudo ./install-newtab.sh /opt/firefox-esr   # or give a different install dir
+sudo ./install-newtab.sh --newtab-only      # only new tabs (keeps your homepage + session restore)
 ```
 
 It writes both files, fills in **your** home path automatically (it uses `$SUDO_USER`, so the
 path is `/home/<you>/...` and not `/root/...`), and sets the permissions.
+
+By default it sets the startpage for all three:
+
+| What | How (in `mozilla.cfg`) |
+|---|---|
+| New tabs (Ctrl+T) | `AboutNewTab.newTabURL` |
+| Home button + new windows | `pref("browser.startup.homepage", …)` |
+| On launch | `pref("browser.startup.page", 1)`: shows the homepage **instead of restoring your last session**. Old tabs are still under History → Restore Previous Session. |
+
+These prefs are re-applied at every Firefox start. If you change them in Settings, the change
+only lasts until the next restart. To keep your own homepage or session restore, re-run with
+`--newtab-only`.
 
 ### Manual way
 
@@ -84,6 +99,9 @@ EOF
 sudo tee "$FF/mozilla.cfg" >/dev/null <<EOF
 //
 ChromeUtils.importESModule("resource:///modules/AboutNewTab.sys.mjs").AboutNewTab.newTabURL = "file://$HOME/.local/share/firefox-startpage/index.html";
+// Homepage + on launch (delete these two lines for new tabs only)
+pref("browser.startup.homepage", "file://$HOME/.local/share/firefox-startpage/index.html");
+pref("browser.startup.page", 1);
 EOF
 
 sudo chmod 644 "$FF/mozilla.cfg" "$FF/defaults/pref/autoconfig.js"
@@ -96,7 +114,7 @@ sudo chmod 644 "$FF/mozilla.cfg" "$FF/defaults/pref/autoconfig.js"
 
 ```sh
 cat /usr/lib/firefox/defaults/pref/autoconfig.js   # 3 pref(...) lines, incl. sandbox_enabled false
-cat /usr/lib/firefox/mozilla.cfg                   # line 1 is "//", line 2 has file:///home/<you>/...
+cat /usr/lib/firefox/mozilla.cfg                   # line 1 is "//"; newTabURL + homepage say file:///home/<you>/...
 ```
 
 Why `sandbox_enabled false`: regular (non-ESR) Firefox sandboxes AutoConfig by default, which
@@ -125,28 +143,11 @@ pgrep -a firefox    # must print NOTHING. If it prints something: pkill firefox
 
 Relaunch Firefox and press **Ctrl+T**.
 
-**Check:** the new tab shows the startpage. Note the address bar stays empty on new tabs.
-That's normal for AutoConfig.
-
----
-
-## Optional: also show it on launch / Home button
-
-`browser.startup.homepage` only controls the Home button and new windows. What shows on
-**launch** is `browser.startup.page` (default `3` = restore previous session).
-
-1. Find your profile folder: open `about:support` → **Profile Folder** → *Open Directory*.
-   Or by hand: newer Firefox keeps profiles in **`~/.config/mozilla/firefox/`**, older
-   setups in `~/.mozilla/firefox/`. The default one is listed in `profiles.ini`
-   under `[Install…] Default=`.
-2. Create/append `user.js` in that folder (use `user.js`, **not** `prefs.js`, which Firefox
-   overwrites on exit):
-
-   ```js
-   user_pref("browser.startup.homepage", "file:///home/YOUR_USERNAME/.local/share/firefox-startpage/index.html");
-   user_pref("browser.startup.page", 1);   // 1 = homepage on launch instead of restoring the last session
-   ```
-3. Fully restart Firefox (step 5). Old tabs are still recoverable via History → Restore Previous Session.
+**Check:**
+- Firefox opens on the startpage (unless you used `--newtab-only`).
+- **Ctrl+T** shows it. The address bar stays empty on new tabs. That's normal for AutoConfig.
+- The Home button and **Ctrl+N** show it.
+- `about:preferences#home` lists the startpage's `file://` path as the homepage.
 
 ---
 
@@ -188,6 +189,7 @@ Needs `wget` (see step 0). It fails partway through without it.
 | Still default, files look right | `mozilla.cfg` line 1 isn't `//`, or `sandbox_enabled false` is missing from `autoconfig.js`. |
 | Another page/old copy shows | An extension is controlling new tabs (step 4). New Tab Override's "local file" mode keeps a stale copy. |
 | Blank/"file not found" tab | Path in `mozilla.cfg` is wrong (e.g. `/root/...` from running `$HOME` inside sudo, or a typo). Re-run step 3. |
+| New tabs work but launch/Home doesn't | Installed with `--newtab-only`, or an older `mozilla.cfg` without the two `pref(...)` lines. Re-run step 3 without the flag. Also remove any `browser.startup.*` lines from a `user.js` in your profile (`about:support` → Profile Folder) so the two don't fight. |
 | Worked, then stopped after an update | The install dir was replaced (common for manual `/opt` ESR). Re-run step 3. On Arch the pacman package doesn't own these files, so `pacman -Syu` leaves them alone. |
 
 ## Undo
